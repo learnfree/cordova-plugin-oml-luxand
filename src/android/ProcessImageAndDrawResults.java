@@ -14,7 +14,11 @@ import android.widget.Toast;
 
 import com.luxand.FSDK;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -29,7 +33,7 @@ class ProcessImageAndDrawResults extends View {
     long mTouchedID;
     int mStopping;
     int mStopped;
-
+    private final String[] mAttributeValues = new String[MAX_FACES];
     Context mContext;
     Paint mPaintGreen, mPaintBlue, mPaintBlueTransparent;
     byte[] mYUVData;
@@ -173,6 +177,9 @@ class ProcessImageAndDrawResults extends View {
         FSDK.FreeImage(RotatedImage);
 
         faceLock.lock();
+        for (int i = 0; i < MAX_FACES; ++i) {
+            mAttributeValues[i] = "";
+        }
 
         for (int i=0; i<MAX_FACES; ++i) {
             mFacePositions[i] = new FaceRectangle();
@@ -187,7 +194,31 @@ class ProcessImageAndDrawResults extends View {
         for (int i = 0; i < (int)face_count[0]; ++i) {
             FSDK.FSDK_Features Eyes = new FSDK.FSDK_Features();
             FSDK.GetTrackerEyes(mTracker, 0, mIDs[i], Eyes);
+            String values[] = new String[1];
 
+            FSDK.GetTrackerFacialAttribute(mTracker, 0, IDs[i], "Gender", values, 1024);
+            float[] confidenceMale = new float[1];
+            float[] confidenceFemale = new float[1];
+            FSDK.GetValueConfidence(values[0], "Male", confidenceMale);
+            FSDK.GetValueConfidence(values[0], "Female", confidenceFemale);
+
+            FSDK.GetTrackerFacialAttribute(mTracker, 0, IDs[i], "Age", values, 1024);
+            float[] confidenceAge = new float[1];
+            FSDK.GetValueConfidence(values[0], "Age", confidenceAge);
+            int confidenceMalePercent = (int)(confidenceMale[0] * 100);
+            int confidenceFemalePercent = (int)(confidenceFemale[0] * 100);
+            values[0] = "";
+            FSDK.GetTrackerFacialAttribute(mTracker, 0, IDs[i], "Expression", values, 1024);
+            float[] confidenceSmile = new float[1];
+            float[] confidenceEyesOpen = new float[1];
+            FSDK.GetValueConfidence(values[0], "Smile", confidenceSmile);
+            FSDK.GetValueConfidence(values[0], "EyesOpen", confidenceEyesOpen);
+            int confidenceSmilePercent = (int)(confidenceSmile[0] * 100);
+            int confidenceEyesOpenPercent = (int)(confidenceEyesOpen[0] * 100);
+            if (confidenceMalePercent <= confidenceFemalePercent)
+                mAttributeValues[i] = String.format(Locale.ENGLISH,"{\"AGE\":%d,\"GENDER\":\"%s\",\"SMILE\":%d%%;\"EYESOPENED\":%d%%}", (int) confidenceAge[0], "Female",confidenceSmilePercent, confidenceEyesOpenPercent);
+            else
+                mAttributeValues[i] = String.format(Locale.ENGLISH,"{\"AGE\":%d,\"GENDER\":\"%s\",\"SMILE\":%d%%;\"EYESOPENED\":%d%%}", (int) confidenceAge[0], "Male",confidenceSmilePercent, confidenceEyesOpenPercent);
             GetFaceFrame(Eyes, mFacePositions[i]);
             mFacePositions[i].x1 *= ratio;
             mFacePositions[i].y1 *= ratio;
@@ -212,19 +243,15 @@ class ProcessImageAndDrawResults extends View {
                 }
                 Log.e("com.luxand.dsi.Ident", identified+"");
                 if(this.loginCount<=loginTryCount && this.identified) {
-                    if(this.onImageProcessListener != null ) {
-                        this.onImageProcessListener.handle(false, "logged successfully");
-                        mStopping = 1;
-                        return;
-                    }
+                    response(false, "logged successfully", mAttributeValues[0]);
+                    mStopping = 1;
+                    return;
                 }
                 this.loginCount++;
                 if(this.loginCount>=loginTryCount) {
-                    if(this.onImageProcessListener != null ) {
-                        this.onImageProcessListener.handle(true ,  "Unable to Login");
-                        mStopping = 1;
-                        return;
-                    }
+                    response(true ,  "Unable to Login", mAttributeValues[0]);
+                    mStopping = 1;
+                    return;
                 }
             }
         }else {
@@ -238,7 +265,7 @@ class ProcessImageAndDrawResults extends View {
                     if(r==REGISTERED) {
                         registerCheckCount = 1;
                     }else if(r==ALREADY_REGISTERED){
-                        if(this.onImageProcessListener != null ) this.onImageProcessListener.handle(true , "Already Identified");
+                        response(true, "Already registered", mAttributeValues[0]);
                         //mStopped = 1;
                         mStopping = 1;
                         return;
@@ -250,14 +277,14 @@ class ProcessImageAndDrawResults extends View {
                         //Toast.makeText(getContext(), "Unable to identify you", Toast.LENGTH_LONG);
                         //purge id
                         remove(IDs[0]);
-                        if(this.onImageProcessListener != null ) this.onImageProcessListener.handle(true , "Unable to identify you");
+                        response(true,"Unable to identify you", mAttributeValues[0]);
                         mStopping = 1;
                         return;
                     }
                     registerCheckCount++;
                     canvas.drawRect(mFacePositions[0].x1, mFacePositions[0].y1, mFacePositions[0].x2, mFacePositions[0].y2, mPaintBlueTransparent);
                     if(registerCheckCount>=loginTryCount) {
-                        if(this.onImageProcessListener != null ) this.onImageProcessListener.handle(false , "Identified successfully");
+                        response(false, "Identified successfully", mAttributeValues[0]);
                         mStopping = 1;
                         return;
                     }
@@ -286,6 +313,20 @@ class ProcessImageAndDrawResults extends View {
         super.onDraw(canvas);
     } // end onDraw method
 
+    private void response(boolean error, String message,  String extra) {
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("error", error);
+            obj.put("message", message);
+            obj.put("extra", extra);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            obj = new JSONObject();
+        }
+        if(this.onImageProcessListener != null) {
+            this.onImageProcessListener.handle(obj);
+        }
+    }
     private String generateName () {
         return "OML-LUXAND"+new Date().getTime();
     }
@@ -295,6 +336,7 @@ class ProcessImageAndDrawResults extends View {
         FSDK.UnlockID(mTracker, id);
         return ok == FSDK.FSDKE_OK;
     }
+
     private String performRegistrationAgain(long id) {
         FSDK.LockID(mTracker, id);
         String names[] = new String[1];

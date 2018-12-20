@@ -21,6 +21,8 @@ import android.view.ViewGroup.LayoutParams;
 
 import com.luxand.FSDK;
 
+import org.json.JSONObject;
+
 public class OMLLuxand extends Activity implements OnClickListener {
 
     private boolean mIsFailed = false;
@@ -58,9 +60,19 @@ public class OMLLuxand extends Activity implements OnClickListener {
 
     private void resetTrackerParameters() {
         int errpos[] = new int[1];
-        FSDK.SetTrackerMultipleParameters(mDraw.mTracker, "ContinuousVideoFeed=true;FacialFeatureJitterSuppression=0;RecognitionPrecision=1;Threshold=0.996;Threshold2=0.9995;ThresholdFeed=0.97;MemoryLimit=2000;HandleArbitraryRotations=false;DetermineFaceRotationAngle=true;InternalResizeWidth=70;FaceDetectionThreshold=3;", errpos);
+        FSDK.SetTrackerMultipleParameters(mDraw.mTracker, "DetectFacialFeatures=true;ContinuousVideoFeed=true;FacialFeatureJitterSuppression=0;RecognitionPrecision=1;Threshold=0.996;Threshold2=0.9995;ThresholdFeed=0.97;MemoryLimit=2000;HandleArbitraryRotations=false;DetermineFaceRotationAngle=true;InternalResizeWidth=70;FaceDetectionThreshold=3;", errpos);
         if (errpos[0] != 0) {
             showErrorAndClose("Error setting tracker parameters, position", errpos[0]);
+        }
+        FSDK.SetTrackerMultipleParameters(mDraw.mTracker, "DetectAge=true;DetectGender=true;DetectExpression=true", errpos);
+        if (errpos[0] != 0) {
+            showErrorAndClose("Error setting tracker parameters 2, position", errpos[0]);
+        }
+
+        // faster smile detection
+        FSDK.SetTrackerMultipleParameters(mDraw.mTracker, "AttributeExpressionSmileSmoothingSpatial=0.5;AttributeExpressionSmileSmoothingTemporal=10;", errpos);
+        if (errpos[0] != 0) {
+            showErrorAndClose("Error setting tracker parameters 3, position", errpos[0]);
         }
     }
 
@@ -98,10 +110,10 @@ public class OMLLuxand extends Activity implements OnClickListener {
         mDraw = new ProcessImageAndDrawResults(this, this.launchType.equals("FOR_REGISTER"), loginTryCount);
         mDraw.setOnImageProcessListener(new OnImageProcessListener() {
             @Override
-            public void handle(boolean error, String obj) {
+            public void handle(JSONObject obj) {
                 Intent data = new Intent();
-                data.putExtra("result", obj);
-                data.putExtra("error", error);
+                if(obj==null) obj = new JSONObject();
+                data.putExtra("data", obj.toString());
                 setResult(RESULT_OK, data);
                 _pause();
                 finish();
