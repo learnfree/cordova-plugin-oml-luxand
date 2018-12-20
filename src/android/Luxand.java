@@ -7,7 +7,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.content.Intent;
 import android.content.Context;
@@ -20,15 +22,18 @@ import java.util.Map;
 
 public class Luxand extends CordovaPlugin {
     private static final int LOGIN_CODE = 3;
+    private static final String LOG_TAG = "com.luxand.oml.dsi";
     private String dbName;
+    private JSONArray reqArgs;
     private CallbackContext callbackContext;
     private static final int IDENTIFY_CODE = 2;
     private static int loginTryCount;
-
+    private String [] permissions = { Manifest.permission.CAMERA };
     @Override
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
         Log.e("com.luxand.dsi-------", action+":"+data.toString());
         this.callbackContext = callbackContext;
+        this.reqArgs = data;
         Context context = cordova.getActivity().getApplicationContext();
         if (action.equals("init")) {
             String licence = (String)data.get(0);
@@ -45,14 +50,21 @@ public class Luxand extends CordovaPlugin {
             //callbackContext.success(message);
             return true;
         } else if(action.equals("register")) {
-            cordova.setActivityResultCallback (this);
-            keepCallback(callbackContext);
-            openNewActivity(context, IDENTIFY_CODE);
+            if(!hasPermisssion()) {
+                requestPermissions(LOGIN_CODE);
+            }else {
+                startCamera(IDENTIFY_CODE, callbackContext, data);
+            }
             return true;
         }else if(action.equals("login")) {
-            cordova.setActivityResultCallback (this);
-            keepCallback(callbackContext);
-            openNewActivity(context, LOGIN_CODE);
+            // cordova.setActivityResultCallback (this);
+            // keepCallback(callbackContext);
+            // openNewActivity(context, LOGIN_CODE);
+            if(!hasPermisssion()) {
+                requestPermissions(LOGIN_CODE);
+            }else {
+                startCamera(LOGIN_CODE, callbackContext, data);
+            }
             return true;
         }
 
@@ -60,6 +72,26 @@ public class Luxand extends CordovaPlugin {
             return false;
 
         }
+    }
+    private void startCamera(int requestCode, CallbackContext callbackContext, JSONArray data) {
+        switch(requestCode) {
+            case IDENTIFY_CODE: 
+                register(callbackContext, data);
+                break;
+            case LOGIN_CODE:
+                login(callbackContext, data);
+                break;
+        }
+    }
+    private void register(CallbackContext callbackContext, JSONArray data) {
+         cordova.setActivityResultCallback (this);
+        keepCallback(callbackContext);
+        openNewActivity(cordova.getActivity(), IDENTIFY_CODE);
+    }
+    private void login(CallbackContext callbackContext, JSONArray data) {
+         cordova.setActivityResultCallback (this);
+        keepCallback(callbackContext);
+        openNewActivity(cordova.getActivity(), LOGIN_CODE);
     }
     private void keepCallback(CallbackContext callbackContext) {
         PluginResult r = new PluginResult(PluginResult.Status.NO_RESULT);
@@ -145,4 +177,50 @@ public class Luxand extends CordovaPlugin {
             }
         }
     }
+
+     /**
+     * check application's permissions
+     */
+    public boolean hasPermisssion() {
+        for(String p : permissions)
+        {
+            if(!PermissionHelper.hasPermission(this, p))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    /**
+     * We override this so that we can access the permissions variable, which no longer exists in
+     * the parent class, since we can't initialize it reliably in the constructor!
+     *
+     * @param requestCode The code to get request action
+     */
+    public void requestPermissions(int requestCode)
+    {
+        PermissionHelper.requestPermissions(this, requestCode, permissions);
+    }
+
+    /**
+   * processes the result of permission request
+   *
+   * @param requestCode The code to get request action
+   * @param permissions The collection of permissions
+   * @param grantResults The result of grant
+   */
+    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException
+    {
+        PluginResult result;
+        for (int r : grantResults) {
+            if (r == PackageManager.PERMISSION_DENIED) {
+                Log.d(LOG_TAG, "Permission Denied!");
+                result = new PluginResult(PluginResult.Status.ILLEGAL_ACCESS_EXCEPTION);
+                this.callbackContext.sendPluginResult(result);
+                return;
+            }
+        }
+        startCamera(requestCode, this.callbackContext, this.reqArgs);
+    }
+
 }
