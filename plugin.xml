@@ -25,6 +25,7 @@
         <source-file src="src/android/ProcessImageAndDrawResults.java" target-dir="src/com/luxand/dsi" />
         <source-file src="src/android/OMLLuxand.java" target-dir="src/com/luxand/dsi" />
         <source-file src="src/android/Luxand.java" target-dir="src/com/luxand/dsi" />
+        <source-file src="src/android/ProcessImageAndDrawResults.java" target-dir="src/com/luxand/dsi" />
 
         <resource-file src="src/android/libs/armeabi-v7a/libfsdk.so" target="jniLibs/armeabi-v7a/libfsdk.so" />
         <resource-file src="src/android/libs/x86/libfsdk.so" target="jniLibs/x86/libfsdk.so" />
