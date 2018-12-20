@@ -1,0 +1,17 @@
+{
+  "name": "cordova-plugin-luxand",
+  "version": "0.0.1",
+  "description": "Face SDK lucand",
+  "cordova": {
+    "id": "com.luxand",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Doumbia Mahamadou",
+  "license": "MIT"
+}
