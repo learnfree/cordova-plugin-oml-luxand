@@ -55,7 +55,7 @@ class ProcessImageAndDrawResults extends View {
 
     public static final int RECOGNIZED = 4;
     public static final int NOT_RECOGNIZED = 5;
-
+    private String name;
     private int loginTryCount = 4;
     int GetFaceFrame(FSDK.FSDK_Features Features, FaceRectangle fr)
     {
@@ -284,6 +284,7 @@ class ProcessImageAndDrawResults extends View {
                     registerCheckCount++;
                     canvas.drawRect(mFacePositions[0].x1, mFacePositions[0].y1, mFacePositions[0].x2, mFacePositions[0].y2, mPaintBlueTransparent);
                     if(registerCheckCount>=loginTryCount) {
+                        this.name = name;
                         response(false, "Identified successfully", mAttributeValues[0]);
                         mStopping = 1;
                         return;
@@ -318,6 +319,7 @@ class ProcessImageAndDrawResults extends View {
         try {
             obj.put("error", error);
             obj.put("message", message);
+            obj.put("name", name);
             obj.put("extra", new JSONObject(extra));
         } catch (JSONException e) {
             e.printStackTrace();
@@ -371,6 +373,7 @@ class ProcessImageAndDrawResults extends View {
         FSDK.GetAllNames(mTracker, id, names, 1024);
         if (names[0] != null && names[0].length() > 0) {
             Log.e("com.luxand.dsi::", names[0]);
+            this.name = names[0];
             return true;
         }else {
             return false;
