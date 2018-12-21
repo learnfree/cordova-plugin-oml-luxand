@@ -10,31 +10,23 @@ exports.init = function (config, success, error) {
 exports.identify = function (success, error) {
     exec((data)=>{
         console.log("data:"+JSON.stringify(data));
+        delete data.error;
+        data.extra = JSON.parse(data.extra || "{}");
         if(data.status==="SUCCESS") {
-            return success({
-                status: "SUCCESS",
-                message: data.message
-            });
+            return success(data);
         }else {
-            return error({
-                status: "FAIL",
-                message: data.message
-            });
+            return error(data);
         }
     }, error, 'Luxand', 'register', []);
 };
 exports.login = function (success, error) {
     exec((data)=>{
+        delete data.error;
+        data.extra = JSON.parse(data.extra || "{}");
         if(data.status==="SUCCESS") {
-            return success({
-                status: "SUCCESS",
-                message: data.message
-            });
+            return success(data);
         }else {
-            return error({
-                status: "FAIL",
-                message: data.message
-            });
+            return error(data);
         }
     }, error, 'Luxand', 'login', []);
 };
