@@ -216,9 +216,9 @@ class ProcessImageAndDrawResults extends View {
             int confidenceSmilePercent = (int)(confidenceSmile[0] * 100);
             int confidenceEyesOpenPercent = (int)(confidenceEyesOpen[0] * 100);
             if (confidenceMalePercent <= confidenceFemalePercent)
-                mAttributeValues[i] = String.format(Locale.ENGLISH,"{\"AGE\":%d,\"GENDER\":\"%s\",\"SMILE\":%d%%;\"EYESOPENED\":%d%%}", (int) confidenceAge[0], "Female",confidenceSmilePercent, confidenceEyesOpenPercent);
+                mAttributeValues[i] = String.format(Locale.ENGLISH,"{\"AGE\":%d,\"GENDER\":\"%s\",\"SMILE\":\"%d%%\";\"EYESOPENED\":\"%d%%\"}", (int) confidenceAge[0], "Female",confidenceSmilePercent, confidenceEyesOpenPercent);
             else
-                mAttributeValues[i] = String.format(Locale.ENGLISH,"{\"AGE\":%d,\"GENDER\":\"%s\",\"SMILE\":%d%%;\"EYESOPENED\":%d%%}", (int) confidenceAge[0], "Male",confidenceSmilePercent, confidenceEyesOpenPercent);
+                mAttributeValues[i] = String.format(Locale.ENGLISH,"{\"AGE\":%d,\"GENDER\":\"%s\",\"SMILE\":\"%d%%\";\"EYESOPENED\":\"%d%%\"}", (int) confidenceAge[0], "Male",confidenceSmilePercent, confidenceEyesOpenPercent);
             GetFaceFrame(Eyes, mFacePositions[i]);
             mFacePositions[i].x1 *= ratio;
             mFacePositions[i].y1 *= ratio;
@@ -318,7 +318,7 @@ class ProcessImageAndDrawResults extends View {
         try {
             obj.put("error", error);
             obj.put("message", message);
-            obj.put("extra", extra);
+            obj.put("extra", new JSONObject(extra));
         } catch (JSONException e) {
             e.printStackTrace();
             obj = new JSONObject();

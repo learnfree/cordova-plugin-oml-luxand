@@ -123,11 +123,11 @@ public class Luxand extends CordovaPlugin {
                 //JSONObject res = new JSONObject();
                 try {
                     JSONObject resData = new JSONObject(data.getStringExtra("data"));
-                    Log.e("com.luxand.dsi::", ""+data.getExtras());
                     //boolean error = data.getBooleanExtra("error", true);
                     boolean error = resData.getBoolean("error");
                     Log.e("com.luxand.dsi::", ""+error);
                     resData.put("status", error? "FAIL" : "SUCCESS");
+                    Log.e("com.luxand.dsi::", ""+resData);
                     PluginResult result = new PluginResult(PluginResult.Status.OK,resData);
                     if(!error) {
                         result.setKeepCallback(true);
@@ -150,15 +150,14 @@ public class Luxand extends CordovaPlugin {
         }else if(requestCode == IDENTIFY_CODE) {
             if( resultCode == Activity.RESULT_OK && data.hasExtra("data") )
             {
-                JSONObject res = new JSONObject();
                 try {
                     JSONObject resData = new JSONObject(data.getStringExtra("data"));
-                    Log.e("com.luxand.dsi::", ""+data.getExtras());
                     //boolean error = data.getBooleanExtra("error", true);
                     boolean error = resData.getBoolean("error");
                     Log.e("com.luxand.dsi::", ""+error);
                     resData.put("status", error? "FAIL" : "SUCCESS");
-                    PluginResult result = new PluginResult(PluginResult.Status.OK,res);
+                    Log.e("com.luxand.dsi::", ""+resData);
+                    PluginResult result = new PluginResult(PluginResult.Status.OK,resData);
                     if(!error) {
                         result.setKeepCallback(true);
                         callback.sendPluginResult(result);

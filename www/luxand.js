@@ -11,7 +11,7 @@ exports.identify = function (success, error) {
     exec((data)=>{
         console.log("data:"+JSON.stringify(data));
         delete data.error;
-        data.extra = JSON.parse(data.extra || "{}");
+        //data.extra = JSON.parse(data.extra || "{}");
         if(data.status==="SUCCESS") {
             return success(data);
         }else {
@@ -22,7 +22,7 @@ exports.identify = function (success, error) {
 exports.login = function (success, error) {
     exec((data)=>{
         delete data.error;
-        data.extra = JSON.parse(data.extra || "{}");
+        //data.extra = JSON.parse(data.extra || "{}");
         if(data.status==="SUCCESS") {
             return success(data);
         }else {
