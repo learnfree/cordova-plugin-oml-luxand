@@ -51,7 +51,7 @@ public class Luxand extends CordovaPlugin {
             return true;
         } else if(action.equals("register")) {
             if(!hasPermisssion()) {
-                requestPermissions(LOGIN_CODE);
+                requestPermissions(IDENTIFY_CODE);
             }else {
                 startCamera(IDENTIFY_CODE, callbackContext, data);
             }
